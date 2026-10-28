@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface Item {
     id: string;
@@ -24,6 +25,10 @@ function WishlistDetailContent() {
     const [wishlist, setWishlist] = useState<Wishlist | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Zustand für das Hinzufügen neuer Wünsche
+    const [newItemTitle, setNewItemTitle] = useState('');
+    const [copySuccess, setCopySuccess] = useState(false);
 
     const fetchWishlist = async () => {
         try {
@@ -53,6 +58,37 @@ function WishlistDetailContent() {
             fetchWishlist();
         }
     }, [id, searchParams]);
+
+    // Wunsch hinzufügen
+    const handleAddItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newItemTitle.trim()) return;
+
+        try {
+            const res = await fetch(`/api/wishlists/${id}/items`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newItemTitle }),
+            });
+
+            if (res.ok) {
+                setNewItemTitle('');
+                fetchWishlist(); // Liste neu laden
+            } else {
+                alert('Fehler beim Hinzufügen des Wunsches');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    // Link kopieren (inklusive Admin-Schlüssel für den Ersteller oder als Gast-Link)
+    const handleCopyLink = () => {
+        const currentUrl = window.location.href;
+        navigator.clipboard.writeText(currentUrl);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2500);
+    };
 
     const handleToggleReservation = async (itemId: string, currentReservedBy: string | null | undefined) => {
         const shouldReserve = !currentReservedBy;
@@ -85,14 +121,52 @@ function WishlistDetailContent() {
     return(
         <main className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
             <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                
+                {/* Navigation / Zurück zur Startseite */}
+                <div className="mb-4">
+                    <Link href="/" className="text-sm text-blue-600 hover:underline">
+                        ← Neue Wunschliste erstellen
+                    </Link>
+                </div>
+
                 <div className="mb-6 border-b pb-4">
-                    <h1 className="text-2xl font-bold text-gray-800">{wishlist.title}</h1>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-800">{wishlist.title}</h1>
+                        
+                        {/* Share-Button */}
+                        <button
+                            onClick={handleCopyLink}
+                            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                            {copySuccess ? '✓ Link kopiert!' : '📋 Link teilen'}
+                        </button>
+                    </div>
+
                     <p className="text-xs text-gray-500 mt-1">
                         {wishlist.isCreator
                         ? '🔒 Du bist im Admin-Modus (Überraschungsmodus aktiv)'
                         : '🎁 Du betrachtest diese Liste als Gast'}
                     </p>
                 </div>
+
+                {/* Eingabefeld für neue Wünsche (nur für den Ersteller sichtbar) */}
+                {wishlist.isCreator && (
+                    <form onSubmit={handleAddItem} className="mb-6 flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Neuen Wunsch hinzufügen..."
+                            value={newItemTitle}
+                            onChange={(e) => setNewItemTitle(e.target.value)}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                            Hinzufügen
+                        </button>
+                    </form>
+                )}
 
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-gray-700">Wünsche</h2>
@@ -140,7 +214,6 @@ function WishlistDetailContent() {
     );
 }
 
-// Hauptkomponente mit Suspense-Boundary gewrapped, damit Next.js glücklich ist
 export default function WishlistDetailPage() {
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Lade Seite...</div>}>
