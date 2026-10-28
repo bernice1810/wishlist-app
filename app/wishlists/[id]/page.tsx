@@ -4,6 +4,13 @@ import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
+
+
 interface Item {
     id: string;
     title: string;
