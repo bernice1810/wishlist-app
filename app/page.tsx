@@ -59,7 +59,7 @@ export default function Home() {
     setMyLists(updatedLists);
     localStorage.setItem('local_wishlists', JSON.stringify(updatedLists));
 
-    router.push(`/wishlists/${listId}?key=${adminKey}`);
+    router.push(`/wishlist?id=${listId}&key=${adminKey}`);
   };
 
   return (
@@ -133,7 +133,7 @@ export default function Home() {
                 return (
                   <Link
                     key={list.id}
-                    href={`/wishlists/${list.id}${adminKey ? `?key=${adminKey}` : ''}`}
+                    href={`/wishlist?id=${list.id}${adminKey ? `&key=${adminKey}` : ''}`}
                     style={{ backgroundColor: 'var(--accent-bg)' }}
                     className="block p-3 rounded-xl border border-gray-200/60 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center hover:opacity-80"
                   >
