@@ -1,33 +1,31 @@
 @import "tailwindcss";
 
-@layer base {
-  :root, [data-theme="blue"] {
-    --app-bg: #f8fafc;
-    --primary-color: #3b82f6;
-    --accent-bg: #eff6ff;
-  }
+:root, [data-theme="blue"] {
+  --app-bg: #f8fafc;
+  --primary-color: #3b82f6;
+  --accent-bg: #eff6ff;
+}
 
-  [data-theme="sage"] {
-    --app-bg: #f4f8f5;
-    --primary-color: #52796f;
-    --accent-bg: #e8f0ec;
-  }
+[data-theme="sage"] {
+  --app-bg: #f4f8f5;
+  --primary-color: #52796f;
+  --accent-bg: #e8f0ec;
+}
 
-  [data-theme="berry"] {
-    --app-bg: #faf4f7;
-    --primary-color: #d580a5;
-    --accent-bg: #f5e6ee;
-  }
+[data-theme="berry"] {
+  --app-bg: #faf4f7;
+  --primary-color: #d580a5;
+  --accent-bg: #f5e6ee;
+}
 
-  [data-theme="yellow"] {
-    --app-bg: #fcfbf7;
-    --primary-color: #d4a373;
-    --accent-bg: #fefae0;
-  }
+[data-theme="yellow"] {
+  --app-bg: #fcfbf7;
+  --primary-color: #d4a373;
+  --accent-bg: #fefae0;
+}
 
-  body {
-    background-color: var(--app-bg, #f8fafc);
-    color: #171717;
-    font-family: Arial, Helvetica, sans-serif;
-  }
+body {
+  background-color: var(--app-bg, #f8fafc);
+  color: #171717;
+  font-family: Arial, Helvetica, sans-serif;
 }
