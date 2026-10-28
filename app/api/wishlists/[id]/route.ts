@@ -50,3 +50,36 @@ export async function GET(
     return NextResponse.json({ error: 'Fehler beim Laden der Wunschliste' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  try {
+    const params = await props.params;
+    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const clientKey = searchParams.get('key');
+
+    const wishlist = await prisma.wishlist.findUnique({
+      where: { id },
+    });
+
+    if (!wishlist) {
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
+    if (!clientKey || clientKey !== wishlist.secretKey) {
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
+    }
+
+    await prisma.wishlist.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Fehler beim Löschen der Wunschliste:', error);
+    return NextResponse.json({ error: 'Fehler beim Löschen' }, { status: 500 });
+  }
+}

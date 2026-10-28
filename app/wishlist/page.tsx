@@ -32,13 +32,21 @@ function WishlistContent() {
   const [newItemTitle, setNewItemTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('blue');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('preferred_theme');
     if (savedTheme) {
+      setCurrentTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
   }, []);
+
+  const handleThemeChange = (themeName: string) => {
+    setCurrentTheme(themeName);
+    document.documentElement.setAttribute('data-theme', themeName);
+    localStorage.setItem('preferred_theme', themeName);
+  };
 
   const fetchWishlist = useCallback(async () => {
     if (!id) return;
@@ -187,6 +195,35 @@ function WishlistContent() {
           <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--primary-color)' }}>
             ← Zurück zur Übersicht
           </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 hidden sm:inline">Farbschema:</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleThemeChange('blue')}
+                className={`w-5 h-5 rounded-full bg-blue-300 transition-transform cursor-pointer ${currentTheme === 'blue' ? 'ring-2 ring-offset-2 ring-blue-400 scale-110' : 'opacity-70'}`}
+                title="Pastell Blau"
+              />
+              <button
+                type="button"
+                onClick={() => handleThemeChange('sage')}
+                className={`w-5 h-5 rounded-full bg-[#84a98c] transition-transform cursor-pointer ${currentTheme === 'sage' ? 'ring-2 ring-offset-2 ring-[#84a98c] scale-110' : 'opacity-70'}`}
+                title="Pastell Salbei"
+              />
+              <button
+                type="button"
+                onClick={() => handleThemeChange('berry')}
+                className={`w-5 h-5 rounded-full bg-[#e0b1cb] transition-transform cursor-pointer ${currentTheme === 'berry' ? 'ring-2 ring-offset-2 ring-[#e0b1cb] scale-110' : 'opacity-70'}`}
+                title="Pastell Beere"
+              />
+              <button
+                type="button"
+                onClick={() => handleThemeChange('yellow')}
+                className={`w-5 h-5 rounded-full bg-[#f4e2bb] transition-transform cursor-pointer ${currentTheme === 'yellow' ? 'ring-2 ring-offset-2 ring-[#f4e2bb] scale-110' : 'opacity-70'}`}
+                title="Pastell Gelb"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mb-6 border-b pb-4">

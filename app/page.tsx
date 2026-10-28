@@ -72,6 +72,32 @@ export default function Home() {
     }
   };
 
+  const handleDeleteSavedList = async (id: string, title: string) => {
+    if (!confirm(`Möchtest du die Wunschliste "${title}" wirklich löschen?`)) {
+      return;
+    }
+
+    const adminKey = typeof window !== 'undefined' ? localStorage.getItem(`wishlist_admin_${id}`) : '';
+
+    // Falls Admin-Key vorhanden, auch aus der Datenbank löschen
+    if (adminKey) {
+      try {
+        await fetch(`/api/wishlists/${id}?key=${encodeURIComponent(adminKey)}`, {
+          method: 'DELETE',
+        });
+      } catch (e) {
+        console.error('Fehler beim Löschen der Liste aus der DB:', e);
+      }
+    }
+
+    // Aus lokalem Zustand & LocalStorage entfernen
+    const updated = myLists.filter((l) => l.id !== id);
+    setMyLists(updated);
+    localStorage.setItem('local_wishlists', JSON.stringify(updated));
+    localStorage.removeItem(`wishlist_admin_${id}`);
+    localStorage.removeItem(`wishlist_data_${id}`);
+  };
+
   return (
     <main 
       style={{ backgroundColor: 'var(--app-bg)' }}
@@ -142,15 +168,32 @@ export default function Home() {
               {myLists.map((list) => {
                 const adminKey = typeof window !== 'undefined' ? localStorage.getItem(`wishlist_admin_${list.id}`) : '';
                 return (
-                  <Link
+                  <div
                     key={list.id}
-                    href={`/wishlist?id=${list.id}${adminKey ? `&key=${adminKey}` : ''}`}
                     style={{ backgroundColor: 'var(--accent-bg)' }}
-                    className="block p-3 rounded-xl border border-gray-200/60 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center hover:opacity-80"
+                    className="p-3 rounded-xl border border-gray-200/60 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center group hover:opacity-95"
                   >
-                    <span className="truncate">{list.title}</span>
-                    <span className="text-xs font-semibold whitespace-nowrap ml-2" style={{ color: 'var(--primary-color)' }}>Öffnen →</span>
-                  </Link>
+                    <Link
+                      href={`/wishlist?id=${list.id}${adminKey ? `&key=${adminKey}` : ''}`}
+                      className="truncate flex-1 flex items-center justify-between mr-2 hover:underline"
+                    >
+                      <span className="truncate">{list.title}</span>
+                      <span className="text-xs font-semibold whitespace-nowrap ml-2" style={{ color: 'var(--primary-color)' }}>
+                        Öffnen →
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSavedList(list.id, list.title)}
+                      title="Wunschliste löschen"
+                      className="text-gray-400 hover:text-red-500 p-1 rounded-md transition-colors cursor-pointer"
+                      aria-label="Wunschliste löschen"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 );
               })}
             </div>
