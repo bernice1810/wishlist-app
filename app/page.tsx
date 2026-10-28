@@ -42,7 +42,6 @@ export default function Home() {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Erzeuge eine eindeutige ID und einen Admin-Key für die neue Liste
     const listId = Math.random().toString(36).substring(2, 9);
     const adminKey = Math.random().toString(36).substring(2, 12);
 
@@ -53,16 +52,13 @@ export default function Home() {
       createdAt: new Date().toISOString(),
     };
 
-    // Speichere die Liste in localStorage
     localStorage.setItem(`wishlist_data_${listId}`, JSON.stringify(newListData));
     localStorage.setItem(`wishlist_admin_${listId}`, adminKey);
 
-    // Füge sie zur lokalen Übersichtsliste hinzu
     const updatedLists = [{ id: listId, title: title.trim() }, ...myLists];
     setMyLists(updatedLists);
     localStorage.setItem('local_wishlists', JSON.stringify(updatedLists));
 
-    // Weiterleitung zur Detailseite mit Admin-Modus
     router.push(`/wishlists/${listId}?key=${adminKey}`);
   };
 

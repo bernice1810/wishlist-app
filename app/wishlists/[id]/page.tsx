@@ -26,7 +26,6 @@ function WishlistDetailContent() {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
 
-    // Theme beim Laden anwenden
     useEffect(() => {
         const savedTheme = localStorage.getItem('preferred_theme');
         if (savedTheme) {
@@ -34,7 +33,6 @@ function WishlistDetailContent() {
         }
     }, []);
 
-    // Liste aus localStorage laden
     const loadWishlistData = () => {
         if (!id) return;
         const storedData = localStorage.getItem(`wishlist_data_${id}`);
@@ -42,7 +40,6 @@ function WishlistDetailContent() {
         const urlKey = searchParams.get('key');
         const localAdminKey = localStorage.getItem(`wishlist_admin_${id}`);
         
-        // Prüfen ob der Nutzer der Ersteller ist (entweder über URL-Key oder lokalen Admin-Key)
         const creatorMode = (urlKey && urlKey === localAdminKey) || !localAdminKey;
         setIsCreator(creatorMode);
 
@@ -53,8 +50,6 @@ function WishlistDetailContent() {
                 console.error(e);
             }
         } else {
-            // Falls die Liste auf diesem Gerät nicht existiert (z.B. als Gast über Link geöffnet)
-            // Initialisieren wir sie als leere Gast-Ansicht
             setWishlist({
                 id: id,
                 title: 'Wunschliste',
@@ -67,7 +62,6 @@ function WishlistDetailContent() {
         loadWishlistData();
     }, [id, searchParams]);
 
-    // Wunsch hinzufügen (nur Ersteller)
     const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItemTitle.trim() || !wishlist) return;
@@ -88,7 +82,6 @@ function WishlistDetailContent() {
         setNewItemTitle('');
     };
 
-    // Wunsch löschen (nur Ersteller)
     const handleDeleteItem = (itemId: string) => {
         if (!confirm('Möchtest du diesen Wunsch wirklich löschen?') || !wishlist) return;
 
@@ -101,7 +94,6 @@ function WishlistDetailContent() {
         localStorage.setItem(`wishlist_data_${id}`, JSON.stringify(updatedWishlist));
     };
 
-    // Reservieren / Freigeben (für Gäste)
     const handleToggleReservation = (itemId: string) => {
         if (!wishlist) return;
 
