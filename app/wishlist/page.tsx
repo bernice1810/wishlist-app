@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface Item {
@@ -16,10 +16,9 @@ interface WishlistData {
     items: Item[];
 }
 
-function WishlistDetailContent() {
-    const params = useParams();
+function WishlistContent() {
     const searchParams = useSearchParams();
-    const id = params.id as string;
+    const id = searchParams.get('id');
 
     const [wishlist, setWishlist] = useState<WishlistData | null>(null);
     const [isCreator, setIsCreator] = useState(false);
@@ -33,7 +32,7 @@ function WishlistDetailContent() {
         }
     }, []);
 
-    const loadWishlistData = () => {
+    useEffect(() => {
         if (!id) return;
         const storedData = localStorage.getItem(`wishlist_data_${id}`);
         
@@ -56,15 +55,11 @@ function WishlistDetailContent() {
                 items: []
             });
         }
-    };
-
-    useEffect(() => {
-        loadWishlistData();
     }, [id, searchParams]);
 
     const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newItemTitle.trim() || !wishlist) return;
+        if (!newItemTitle.trim() || !wishlist || !id) return;
 
         const newItem: Item = {
             id: Math.random().toString(36).substring(2, 9),
@@ -83,7 +78,7 @@ function WishlistDetailContent() {
     };
 
     const handleDeleteItem = (itemId: string) => {
-        if (!confirm('Möchtest du diesen Wunsch wirklich löschen?') || !wishlist) return;
+        if (!confirm('Möchtest du diesen Wunsch wirklich löschen?') || !wishlist || !id) return;
 
         const updatedWishlist = {
             ...wishlist,
@@ -95,7 +90,7 @@ function WishlistDetailContent() {
     };
 
     const handleToggleReservation = (itemId: string) => {
-        if (!wishlist) return;
+        if (!wishlist || !id) return;
 
         const updatedItems = wishlist.items.map(item => {
             if (item.id === itemId) {
@@ -123,6 +118,10 @@ function WishlistDetailContent() {
         setTimeout(() => setCopySuccess(false), 2500);
     };
 
+    if (!id) {
+        return <div className="min-h-screen flex items-center justify-center text-gray-500">Keine Wunschlisten-ID angegeben.</div>;
+    }
+
     if (!wishlist) {
         return <div className="min-h-screen flex items-center justify-center text-gray-500">Wunschliste wird geladen...</div>;
     }
@@ -133,46 +132,10 @@ function WishlistDetailContent() {
             className="min-h-screen p-6 flex flex-col items-center transition-colors duration-300"
         >
             <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                
                 <div className="flex justify-between items-center border-b pb-4 mb-4">
                     <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--primary-color)' }}>
                         ← Zurück zur Übersicht
                     </Link>
-                    <div className="flex gap-2 items-center">
-                        <span className="text-xs text-gray-400">Farbe:</span>
-                        <button
-                            onClick={() => {
-                                document.documentElement.setAttribute('data-theme', 'blue');
-                                localStorage.setItem('preferred_theme', 'blue');
-                            }}
-                            className="w-4 h-4 rounded-full bg-blue-300 hover:scale-110 transition-transform cursor-pointer"
-                            title="Pastell Blau"
-                        />
-                        <button
-                            onClick={() => {
-                                document.documentElement.setAttribute('data-theme', 'sage');
-                                localStorage.setItem('preferred_theme', 'sage');
-                            }}
-                            className="w-4 h-4 rounded-full bg-[#84a98c] hover:scale-110 transition-transform cursor-pointer"
-                            title="Pastell Salbei"
-                        />
-                        <button
-                            onClick={() => {
-                                document.documentElement.setAttribute('data-theme', 'berry');
-                                localStorage.setItem('preferred_theme', 'berry');
-                            }}
-                            className="w-4 h-4 rounded-full bg-[#e0b1cb] hover:scale-110 transition-transform cursor-pointer"
-                            title="Pastell Beere"
-                        />
-                        <button
-                            onClick={() => {
-                                document.documentElement.setAttribute('data-theme', 'yellow');
-                                localStorage.setItem('preferred_theme', 'yellow');
-                            }}
-                            className="w-4 h-4 rounded-full bg-[#f4e2bb] hover:scale-110 transition-transform cursor-pointer"
-                            title="Pastell Gelb"
-                        />
-                    </div>
                 </div>
 
                 <div className="mb-6 border-b pb-4">
@@ -271,10 +234,10 @@ function WishlistDetailContent() {
     );
 }
 
-export default function WishlistDetailPage() {
+export default function WishlistPage() {
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Lade Seite...</div>}>
-            <WishlistDetailContent />
+            <WishlistContent />
         </Suspense>
     );
 }
