@@ -16,7 +16,6 @@ export default function Home() {
   const [currentTheme, setCurrentTheme] = useState('blue');
   const router = useRouter();
 
-  // Beim Laden gespeicherte Listen und das Theme auslesen
   useEffect(() => {
     const savedLists = localStorage.getItem('my_wishlists');
     if (savedLists) {
@@ -34,7 +33,6 @@ export default function Home() {
     }
   }, []);
 
-  // Theme wechseln und speichern
   const handleThemeChange = (themeName: string) => {
     setCurrentTheme(themeName);
     document.documentElement.setAttribute('data-theme', themeName);
@@ -76,27 +74,35 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+    <main 
+      style={{ backgroundColor: 'var(--app-bg)' }}
+      className="min-h-screen flex flex-col items-center justify-center p-6 transition-colors duration-300"
+    >
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         
-        {/* Theme-Auswahl oben rechts */}
+        {/* Theme-Auswahl mit 4 Pastellfarben */}
         <div className="flex justify-between items-center border-b pb-4">
-          <span className="text-xs font-medium text-gray-500">Farbschema:</span>
+          <span className="text-xs font-medium text-gray-500">Pastell-Farbschema:</span>
           <div className="flex gap-2">
             <button
               onClick={() => handleThemeChange('blue')}
-              className={`w-5 h-5 rounded-full bg-blue-600 transition-transform ${currentTheme === 'blue' ? 'ring-2 ring-offset-2 ring-blue-600 scale-110' : 'opacity-70'}`}
-              title="Klassisch Blau"
+              className={`w-5 h-5 rounded-full bg-blue-300 transition-transform ${currentTheme === 'blue' ? 'ring-2 ring-offset-2 ring-blue-400 scale-110' : 'opacity-70'}`}
+              title="Pastell Blau"
             />
             <button
               onClick={() => handleThemeChange('sage')}
-              className={`w-5 h-5 rounded-full bg-green-600 transition-transform ${currentTheme === 'sage' ? 'ring-2 ring-offset-2 ring-green-600 scale-110' : 'opacity-70'}`}
-              title="Salbei Grün"
+              className={`w-5 h-5 rounded-full bg-[#84a98c] transition-transform ${currentTheme === 'sage' ? 'ring-2 ring-offset-2 ring-[#84a98c] scale-110' : 'opacity-70'}`}
+              title="Pastell Salbei"
             />
             <button
               onClick={() => handleThemeChange('berry')}
-              className={`w-5 h-5 rounded-full bg-pink-600 transition-transform ${currentTheme === 'berry' ? 'ring-2 ring-offset-2 ring-pink-600 scale-110' : 'opacity-70'}`}
-              title="Beere Pink"
+              className={`w-5 h-5 rounded-full bg-[#e0b1cb] transition-transform ${currentTheme === 'berry' ? 'ring-2 ring-offset-2 ring-[#e0b1cb] scale-110' : 'opacity-70'}`}
+              title="Pastell Beere"
+            />
+            <button
+              onClick={() => handleThemeChange('yellow')}
+              className={`w-5 h-5 rounded-full bg-[#f4e2bb] transition-transform ${currentTheme === 'yellow' ? 'ring-2 ring-offset-2 ring-[#f4e2bb] scale-110' : 'opacity-70'}`}
+              title="Pastell Gelb"
             />
           </div>
         </div>
@@ -116,8 +122,7 @@ export default function Home() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="z. B. Geburtstag 2026"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none text-gray-800"
-              style={{ focusRingColor: 'var(--primary-color)' } as any}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-800"
               required
             />
           </div>
@@ -141,7 +146,8 @@ export default function Home() {
                   <Link
                     key={list.id}
                     href={`/wishlists/${list.id}${key ? `?key=${key}` : ''}`}
-                    className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center"
+                    style={{ backgroundColor: 'var(--accent-bg)' }}
+                    className="block p-3 rounded-xl border border-gray-200/60 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center hover:opacity-80"
                   >
                     <span className="truncate">{list.title}</span>
                     <span className="text-xs font-semibold whitespace-nowrap ml-2" style={{ color: 'var(--primary-color)' }}>Öffnen →</span>

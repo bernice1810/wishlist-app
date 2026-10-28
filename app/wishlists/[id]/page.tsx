@@ -29,14 +29,13 @@ function WishlistDetailContent() {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
 
-      // Theme beim Laden der Detailseite anwenden
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('preferred_theme');
-    if (savedTheme) {
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
-  }, []);
-
+    // Theme beim Laden der Detailseite anwenden
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('preferred_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    }, []);
 
     const fetchWishlist = async () => {
         try {
@@ -67,6 +66,7 @@ function WishlistDetailContent() {
         }
     }, [id, searchParams]);
 
+    // Wunsch hinzufügen
     const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItemTitle.trim()) return;
@@ -144,13 +144,52 @@ function WishlistDetailContent() {
     }
 
     return(
-        <main className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+        <main 
+            style={{ backgroundColor: 'var(--app-bg)' }}
+            className="min-h-screen p-6 flex flex-col items-center transition-colors duration-300"
+        >
             <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 
-                <div className="mb-4 flex justify-between items-center">
-                    <Link href="/" className="text-sm text-blue-600 hover:underline">
+                {/* Theme-Auswahl & Zurück-Link auf der Detailseite */}
+                <div className="flex justify-between items-center border-b pb-4 mb-4">
+                    <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--primary-color)' }}>
                         ← Zurück zur Übersicht
                     </Link>
+                    <div className="flex gap-2 items-center">
+                        <span className="text-xs text-gray-400">Farbe:</span>
+                        <button
+                            onClick={() => {
+                                document.documentElement.setAttribute('data-theme', 'blue');
+                                localStorage.setItem('preferred_theme', 'blue');
+                            }}
+                            className="w-4 h-4 rounded-full bg-blue-300 hover:scale-110 transition-transform cursor-pointer"
+                            title="Pastell Blau"
+                        />
+                        <button
+                            onClick={() => {
+                                document.documentElement.setAttribute('data-theme', 'sage');
+                                localStorage.setItem('preferred_theme', 'sage');
+                            }}
+                            className="w-4 h-4 rounded-full bg-[#84a98c] hover:scale-110 transition-transform cursor-pointer"
+                            title="Pastell Salbei"
+                        />
+                        <button
+                            onClick={() => {
+                                document.documentElement.setAttribute('data-theme', 'berry');
+                                localStorage.setItem('preferred_theme', 'berry');
+                            }}
+                            className="w-4 h-4 rounded-full bg-[#e0b1cb] hover:scale-110 transition-transform cursor-pointer"
+                            title="Pastell Beere"
+                        />
+                        <button
+                            onClick={() => {
+                                document.documentElement.setAttribute('data-theme', 'yellow');
+                                localStorage.setItem('preferred_theme', 'yellow');
+                            }}
+                            className="w-4 h-4 rounded-full bg-[#f4e2bb] hover:scale-110 transition-transform cursor-pointer"
+                            title="Pastell Gelb"
+                        />
+                    </div>
                 </div>
 
                 <div className="mb-6 border-b pb-4">
@@ -158,7 +197,8 @@ function WishlistDetailContent() {
                         <h1 className="text-2xl font-bold text-gray-800">{wishlist.title}</h1>
                         <button
                             onClick={handleCopyLink}
-                            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                            style={{ backgroundColor: 'var(--accent-bg)', color: 'var(--primary-color)' }}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-80 flex items-center gap-1.5"
                         >
                             {copySuccess ? '✓ Link kopiert!' : '📋 Link teilen'}
                         </button>
@@ -178,7 +218,7 @@ function WishlistDetailContent() {
                             placeholder="Neuen Wunsch hinzufügen..."
                             value={newItemTitle}
                             onChange={(e) => setNewItemTitle(e.target.value)}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none text-gray-800"
                         />
                         <button
                             type="submit"
@@ -187,7 +227,6 @@ function WishlistDetailContent() {
                         >
                             Hinzufügen
                         </button>
-
                     </form>
                 )}
 
@@ -211,17 +250,15 @@ function WishlistDetailContent() {
                                 </div>
 
                                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                                    {/* Admin kann den Wunsch löschen */}
                                     {wishlist.isCreator && (
                                         <button
                                             onClick={() => handleDeleteItem(item.id)}
                                             className="px-3 py-1.5 text-red-600 hover:bg-red-50 text-xs font-medium rounded-lg transition-colors border border-red-200"
                                         >
                                             Löschen
-                        </button>
+                                        </button>
                                     )}
 
-                                    {/* Gäste können reservieren/freigeben */}
                                     {!wishlist.isCreator && (
                                         <>
                                             {!item.reservedBy ? (
