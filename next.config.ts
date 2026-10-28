@@ -1,7 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'export',
-  /* config options here */
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
