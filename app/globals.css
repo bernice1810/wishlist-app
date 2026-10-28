@@ -24,3 +24,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Standard Theme: Blau */
+:root, [data-theme="blue"] {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+}
+
+/* Theme: Salbei (Grün) */
+[data-theme="sage"] {
+  --primary-color: #16a34a;
+  --primary-hover: #15803d;
+}
+
+/* Theme: Beere (Pink) */
+[data-theme="berry"] {
+  --primary-color: #db2777;
+  --primary-hover: #be185d;
+}

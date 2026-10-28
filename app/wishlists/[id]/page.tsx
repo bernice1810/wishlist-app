@@ -29,6 +29,15 @@ function WishlistDetailContent() {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
 
+      // Theme beim Laden der Detailseite anwenden
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('preferred_theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+  }, []);
+
+
     const fetchWishlist = async () => {
         try {
             let key = searchParams.get('key');
@@ -173,10 +182,12 @@ function WishlistDetailContent() {
                         />
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            style={{ backgroundColor: 'var(--primary-color)' }}
+                            className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-opacity hover:opacity-90"
                         >
                             Hinzufügen
                         </button>
+
                     </form>
                 )}
 
