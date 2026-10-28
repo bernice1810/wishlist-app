@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 
 interface Item {
@@ -16,7 +16,7 @@ interface Wishlist {
     items: Item[];
 }
 
-export default function WishlistDetailPage() {
+function WishlistDetailContent() {
     const params = useParams();
     const searchParams = useSearchParams();
     const id = params.id as string;
@@ -55,7 +55,6 @@ export default function WishlistDetailPage() {
     }, [id, searchParams]);
 
     const handleToggleReservation = async (itemId: string, currentReservedBy: string | null | undefined) => {
-
         const shouldReserve = !currentReservedBy;
 
         try {
@@ -103,7 +102,6 @@ export default function WishlistDetailPage() {
                     ) : (
                         wishlist.items.map((item) => (
                             <div key={item.id} className="p-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            
                                 <div>
                                     <h3 className="font-medium text-gray-800">{item.title}</h3>
                                     <p className="text-xs text-gray-500 mt-0.5">
@@ -114,7 +112,6 @@ export default function WishlistDetailPage() {
                                             : 'Status: Noch frei'}
                                     </p>
                                 </div>
-                                
                                 {!wishlist.isCreator && (
                                     <div>
                                         {!item.reservedBy ? (
@@ -127,7 +124,7 @@ export default function WishlistDetailPage() {
                                         ) : (
                                             <button
                                                 onClick={() => handleToggleReservation(item.id, item.reservedBy)}
-                                                className="px-4 py-2 bg-green-200 hover:bg-green-300 text-gray-700 text-sm font-medium rounded-lg transition colors"
+                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
                                             >
                                                 Freigeben
                                             </button>
@@ -140,5 +137,14 @@ export default function WishlistDetailPage() {
                 </div>
             </div>
         </main>
-    )
+    );
+}
+
+// Hauptkomponente mit Suspense-Boundary gewrapped, damit Next.js glücklich ist
+export default function WishlistDetailPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Lade Seite...</div>}>
+            <WishlistDetailContent />
+        </Suspense>
+    );
 }

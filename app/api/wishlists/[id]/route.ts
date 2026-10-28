@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
 
 interface Params {
-    params: {
-        id: string;
-    }
+    id: string;
 }
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+    request: Request, 
+    props: { params: Promise<Params>}
+) {
     try {
+        const params = await props.params;
         const { id } = params;
         const { searchParams } = new URL(request.url);
         const clientKey = searchParams.get('key');
