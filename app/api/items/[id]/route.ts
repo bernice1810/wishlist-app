@@ -11,12 +11,12 @@ export async function PATCH(request: Request, { params }: Params){
     try {
         const { id } = params;
         const body = await request.json();
-        const { reservedBy } = body;
+        const { shouldReserve } = body;
 
         const updatedItem = await prisma.item.update({
             where: { id },
             data: {
-                reservedBy: reservedBy || null,
+                reservedBy: shouldReserve ? 'Reserviert' : null,
             },
         });
 
