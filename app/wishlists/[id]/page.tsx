@@ -26,7 +26,6 @@ function WishlistDetailContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Zustand für das Hinzufügen neuer Wünsche
     const [newItemTitle, setNewItemTitle] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
 
@@ -59,7 +58,6 @@ function WishlistDetailContent() {
         }
     }, [id, searchParams]);
 
-    // Wunsch hinzufügen
     const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItemTitle.trim()) return;
@@ -73,7 +71,7 @@ function WishlistDetailContent() {
 
             if (res.ok) {
                 setNewItemTitle('');
-                fetchWishlist(); // Liste neu laden
+                fetchWishlist();
             } else {
                 alert('Fehler beim Hinzufügen des Wunsches');
             }
@@ -82,7 +80,25 @@ function WishlistDetailContent() {
         }
     };
 
-    // Link kopieren (inklusive Admin-Schlüssel für den Ersteller oder als Gast-Link)
+    // Wunsch löschen (nur für Admin)
+    const handleDeleteItem = async (itemId: string) => {
+        if (!confirm('Möchtest du diesen Wunsch wirklich löschen?')) return;
+
+        try {
+            const res = await fetch(`/api/items/${itemId}`, {
+                method: 'DELETE',
+            });
+
+            if (res.ok) {
+                fetchWishlist();
+            } else {
+                alert('Fehler beim Löschen des Wunsches');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleCopyLink = () => {
         const currentUrl = window.location.href;
         navigator.clipboard.writeText(currentUrl);
@@ -122,18 +138,15 @@ function WishlistDetailContent() {
         <main className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
             <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 
-                {/* Navigation / Zurück zur Startseite */}
-                <div className="mb-4">
+                <div className="mb-4 flex justify-between items-center">
                     <Link href="/" className="text-sm text-blue-600 hover:underline">
-                        ← Neue Wunschliste erstellen
+                        ← Zurück zur Übersicht
                     </Link>
                 </div>
 
                 <div className="mb-6 border-b pb-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <h1 className="text-2xl font-bold text-gray-800">{wishlist.title}</h1>
-                        
-                        {/* Share-Button */}
                         <button
                             onClick={handleCopyLink}
                             className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
@@ -149,7 +162,6 @@ function WishlistDetailContent() {
                     </p>
                 </div>
 
-                {/* Eingabefeld für neue Wünsche (nur für den Ersteller sichtbar) */}
                 {wishlist.isCreator && (
                     <form onSubmit={handleAddItem} className="mb-6 flex gap-2">
                         <input
@@ -186,25 +198,39 @@ function WishlistDetailContent() {
                                             : 'Status: Noch frei'}
                                     </p>
                                 </div>
-                                {!wishlist.isCreator && (
-                                    <div>
-                                        {!item.reservedBy ? (
-                                            <button
-                                                onClick={() => handleToggleReservation(item.id, item.reservedBy)}
-                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-                                            >
-                                                Schenke ich
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleToggleReservation(item.id, item.reservedBy)}
-                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                                            >
-                                                Freigeben
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                    {/* Admin kann den Wunsch löschen */}
+                                    {wishlist.isCreator && (
+                                        <button
+                                            onClick={() => handleDeleteItem(item.id)}
+                                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 text-xs font-medium rounded-lg transition-colors border border-red-200"
+                                        >
+                                            Löschen
+                        </button>
+                                    )}
+
+                                    {/* Gäste können reservieren/freigeben */}
+                                    {!wishlist.isCreator && (
+                                        <>
+                                            {!item.reservedBy ? (
+                                                <button
+                                                    onClick={() => handleToggleReservation(item.id, item.reservedBy)}
+                                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                                >
+                                                    Schenke ich
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleToggleReservation(item.id, item.reservedBy)}
+                                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                                                >
+                                                    Freigeben
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         ))
                     )}
