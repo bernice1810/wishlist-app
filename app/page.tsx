@@ -13,6 +13,7 @@ export default function Home() {
   const [title, setTitle] = useState('');
   const [myLists, setMyLists] = useState<SavedList[]>([]);
   const [currentTheme, setCurrentTheme] = useState('blue');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,28 +39,37 @@ export default function Home() {
     localStorage.setItem('preferred_theme', themeName);
   };
 
-  const handleCreateList = (e: React.FormEvent) => {
+  const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || loading) return;
 
-    const listId = Math.random().toString(36).substring(2, 9);
-    const adminKey = Math.random().toString(36).substring(2, 12);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/wishlists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim() }),
+      });
 
-    const newListData = {
-      id: listId,
-      title: title.trim(),
-      items: [],
-      createdAt: new Date().toISOString(),
-    };
+      if (!res.ok) {
+        throw new Error('Fehler beim Erstellen');
+      }
 
-    localStorage.setItem(`wishlist_data_${listId}`, JSON.stringify(newListData));
-    localStorage.setItem(`wishlist_admin_${listId}`, adminKey);
+      const data = await res.json();
+      const { id: listId, secretKey: adminKey } = data.wishlist;
 
-    const updatedLists = [{ id: listId, title: title.trim() }, ...myLists];
-    setMyLists(updatedLists);
-    localStorage.setItem('local_wishlists', JSON.stringify(updatedLists));
+      const updatedLists = [{ id: listId, title: title.trim() }, ...myLists];
+      setMyLists(updatedLists);
+      localStorage.setItem('local_wishlists', JSON.stringify(updatedLists));
+      localStorage.setItem(`wishlist_admin_${listId}`, adminKey);
 
-    router.push(`/wishlist?id=${listId}&key=${adminKey}`);
+      router.push(`/wishlist?id=${listId}&key=${adminKey}`);
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Erstellen der Wunschliste. Bitte prüfe deine Internet- bzw. Datenbankverbindung.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,10 +127,11 @@ export default function Home() {
           </div>
           <button
             type="submit"
+            disabled={loading}
             style={{ backgroundColor: 'var(--primary-color)' }}
-            className="w-full py-2.5 text-white font-medium rounded-lg transition-opacity hover:opacity-90 cursor-pointer"
+            className={`w-full py-2.5 text-white font-medium rounded-lg transition-opacity hover:opacity-90 cursor-pointer ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Wunschliste erstellen
+            {loading ? 'Erstelle Wunschliste...' : 'Wunschliste erstellen'}
           </button>
         </form>
 
