@@ -10,10 +10,9 @@ interface Item {
     reservedBy?: string | null;
 }
 
-interface Wishlist {
+interface WishlistData {
+    id: string;
     title: string;
-    createdAt: string;
-    isCreator: boolean;
     items: Item[];
 }
 
@@ -22,14 +21,12 @@ function WishlistDetailContent() {
     const searchParams = useSearchParams();
     const id = params.id as string;
 
-    const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
+    const [wishlist, setWishlist] = useState<WishlistData | null>(null);
+    const [isCreator, setIsCreator] = useState(false);
     const [newItemTitle, setNewItemTitle] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
 
-    // Theme beim Laden der Detailseite anwenden
+    // Theme beim Laden anwenden
     useEffect(() => {
         const savedTheme = localStorage.getItem('preferred_theme');
         if (savedTheme) {
@@ -37,75 +34,94 @@ function WishlistDetailContent() {
         }
     }, []);
 
-    const fetchWishlist = async () => {
-        try {
-            let key = searchParams.get('key');
+    // Liste aus localStorage laden
+    const loadWishlistData = () => {
+        if (!id) return;
+        const storedData = localStorage.getItem(`wishlist_data_${id}`);
+        
+        const urlKey = searchParams.get('key');
+        const localAdminKey = localStorage.getItem(`wishlist_admin_${id}`);
+        
+        // Prüfen ob der Nutzer der Ersteller ist (entweder über URL-Key oder lokalen Admin-Key)
+        const creatorMode = (urlKey && urlKey === localAdminKey) || !localAdminKey;
+        setIsCreator(creatorMode);
 
-            if (!key && typeof window !== 'undefined'){
-                key = localStorage.getItem(`wishlist_key_${id}`);
+        if (storedData) {
+            try {
+                setWishlist(JSON.parse(storedData));
+            } catch (e) {
+                console.error(e);
             }
-            const url = key ? `/api/wishlists/${id}?key=${key}`: `/api/wishlists/${id}`;
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if(res.ok){
-                setWishlist(data);
-            } else {
-                setError(data.error || 'Fehler beim Laden der Wunschliste');
-            }
-        } catch (err){
-            setError('Ein Netzwerkfehler ist aufgetreten.');
-        } finally {
-            setLoading(false);
+        } else {
+            // Falls die Liste auf diesem Gerät nicht existiert (z.B. als Gast über Link geöffnet)
+            // Initialisieren wir sie als leere Gast-Ansicht
+            setWishlist({
+                id: id,
+                title: 'Wunschliste',
+                items: []
+            });
         }
     };
 
     useEffect(() => {
-        if (id){
-            fetchWishlist();
-        }
+        loadWishlistData();
     }, [id, searchParams]);
 
-    // Wunsch hinzufügen
-    const handleAddItem = async (e: React.FormEvent) => {
+    // Wunsch hinzufügen (nur Ersteller)
+    const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newItemTitle.trim()) return;
+        if (!newItemTitle.trim() || !wishlist) return;
 
-        try {
-            const res = await fetch(`/api/wishlists/${id}/items`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: newItemTitle }),
-            });
+        const newItem: Item = {
+            id: Math.random().toString(36).substring(2, 9),
+            title: newItemTitle.trim(),
+            reservedBy: null,
+        };
 
-            if (res.ok) {
-                setNewItemTitle('');
-                fetchWishlist();
-            } else {
-                alert('Fehler beim Hinzufügen des Wunsches');
-            }
-        } catch (err) {
-            console.error(err);
-        }
+        const updatedWishlist = {
+            ...wishlist,
+            items: [newItem, ...wishlist.items]
+        };
+
+        setWishlist(updatedWishlist);
+        localStorage.setItem(`wishlist_data_${id}`, JSON.stringify(updatedWishlist));
+        setNewItemTitle('');
     };
 
-    // Wunsch löschen (nur für Admin)
-    const handleDeleteItem = async (itemId: string) => {
-        if (!confirm('Möchtest du diesen Wunsch wirklich löschen?')) return;
+    // Wunsch löschen (nur Ersteller)
+    const handleDeleteItem = (itemId: string) => {
+        if (!confirm('Möchtest du diesen Wunsch wirklich löschen?') || !wishlist) return;
 
-        try {
-            const res = await fetch(`/api/items/${itemId}`, {
-                method: 'DELETE',
-            });
+        const updatedWishlist = {
+            ...wishlist,
+            items: wishlist.items.filter(item => item.id !== itemId)
+        };
 
-            if (res.ok) {
-                fetchWishlist();
-            } else {
-                alert('Fehler beim Löschen des Wunsches');
+        setWishlist(updatedWishlist);
+        localStorage.setItem(`wishlist_data_${id}`, JSON.stringify(updatedWishlist));
+    };
+
+    // Reservieren / Freigeben (für Gäste)
+    const handleToggleReservation = (itemId: string) => {
+        if (!wishlist) return;
+
+        const updatedItems = wishlist.items.map(item => {
+            if (item.id === itemId) {
+                return {
+                    ...item,
+                    reservedBy: item.reservedBy ? null : 'reserviert'
+                };
             }
-        } catch (err) {
-            console.error(err);
-        }
+            return item;
+        });
+
+        const updatedWishlist = {
+            ...wishlist,
+            items: updatedItems
+        };
+
+        setWishlist(updatedWishlist);
+        localStorage.setItem(`wishlist_data_${id}`, JSON.stringify(updatedWishlist));
     };
 
     const handleCopyLink = () => {
@@ -115,42 +131,18 @@ function WishlistDetailContent() {
         setTimeout(() => setCopySuccess(false), 2500);
     };
 
-    const handleToggleReservation = async (itemId: string, currentReservedBy: string | null | undefined) => {
-        const shouldReserve = !currentReservedBy;
-
-        try {
-            const res = await fetch(`/api/items/${itemId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ shouldReserve }),
-            });
-
-            if (res.ok){
-                fetchWishlist();
-            } else {
-                alert('Fehler beim Aktualisieren der Reservierung');
-            }
-        } catch (err){
-            console.error(err);
-        }
-    };
-    
-    if (loading) {
+    if (!wishlist) {
         return <div className="min-h-screen flex items-center justify-center text-gray-500">Wunschliste wird geladen...</div>;
     }
 
-    if (error || !wishlist){
-        return <div className="min-h-screen flex items-center justify-center text-red-500">{error || 'Nicht gefunden'}</div>;
-    }
-
-    return(
+    return (
         <main 
             style={{ backgroundColor: 'var(--app-bg)' }}
             className="min-h-screen p-6 flex flex-col items-center transition-colors duration-300"
         >
             <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 
-                {/* Theme-Auswahl & Zurück-Link auf der Detailseite */}
+                {/* Header mit Zurück-Link und Farbumschalter */}
                 <div className="flex justify-between items-center border-b pb-4 mb-4">
                     <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--primary-color)' }}>
                         ← Zurück zur Übersicht
@@ -198,20 +190,20 @@ function WishlistDetailContent() {
                         <button
                             onClick={handleCopyLink}
                             style={{ backgroundColor: 'var(--accent-bg)', color: 'var(--primary-color)' }}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-80 flex items-center gap-1.5"
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-80 flex items-center gap-1.5 cursor-pointer"
                         >
                             {copySuccess ? '✓ Link kopiert!' : '📋 Link teilen'}
                         </button>
                     </div>
 
                     <p className="text-xs text-gray-500 mt-1">
-                        {wishlist.isCreator
+                        {isCreator
                         ? '🔒 Du bist im Admin-Modus (Überraschungsmodus aktiv)'
                         : '🎁 Du betrachtest diese Liste als Gast'}
                     </p>
                 </div>
 
-                {wishlist.isCreator && (
+                {isCreator && (
                     <form onSubmit={handleAddItem} className="mb-6 flex gap-2">
                         <input
                             type="text"
@@ -223,7 +215,7 @@ function WishlistDetailContent() {
                         <button
                             type="submit"
                             style={{ backgroundColor: 'var(--primary-color)' }}
-                            className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-opacity hover:opacity-90"
+                            className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-opacity hover:opacity-90 cursor-pointer"
                         >
                             Hinzufügen
                         </button>
@@ -241,7 +233,7 @@ function WishlistDetailContent() {
                                 <div>
                                     <h3 className="font-medium text-gray-800">{item.title}</h3>
                                     <p className="text-xs text-gray-500 mt-0.5">
-                                        {wishlist.isCreator
+                                        {isCreator
                                         ? 'Status: Auf der Liste'
                                         : item.reservedBy
                                             ? 'Status: Bereits reserviert'
@@ -250,28 +242,28 @@ function WishlistDetailContent() {
                                 </div>
 
                                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                                    {wishlist.isCreator && (
+                                    {isCreator && (
                                         <button
                                             onClick={() => handleDeleteItem(item.id)}
-                                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 text-xs font-medium rounded-lg transition-colors border border-red-200"
+                                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 text-xs font-medium rounded-lg transition-colors border border-red-200 cursor-pointer"
                                         >
                                             Löschen
                                         </button>
                                     )}
 
-                                    {!wishlist.isCreator && (
+                                    {!isCreator && (
                                         <>
                                             {!item.reservedBy ? (
                                                 <button
-                                                    onClick={() => handleToggleReservation(item.id, item.reservedBy)}
-                                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                                    onClick={() => handleToggleReservation(item.id)}
+                                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                                                 >
                                                     Schenke ich
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleToggleReservation(item.id, item.reservedBy)}
-                                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                                                    onClick={() => handleToggleReservation(item.id)}
+                                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors cursor-pointer"
                                                 >
                                                     Freigeben
                                                 </button>

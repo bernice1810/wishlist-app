@@ -11,13 +11,12 @@ interface SavedList {
 
 export default function Home() {
   const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(false);
   const [myLists, setMyLists] = useState<SavedList[]>([]);
   const [currentTheme, setCurrentTheme] = useState('blue');
   const router = useRouter();
 
   useEffect(() => {
-    const savedLists = localStorage.getItem('my_wishlists');
+    const savedLists = localStorage.getItem('local_wishlists');
     if (savedLists) {
       try {
         setMyLists(JSON.parse(savedLists));
@@ -39,38 +38,32 @@ export default function Home() {
     localStorage.setItem('preferred_theme', themeName);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateList = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    setLoading(true);
-    try {
-      const res = await fetch('/api/wishlists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
-      });
+    // Erzeuge eine eindeutige ID und einen Admin-Key für die neue Liste
+    const listId = Math.random().toString(36).substring(2, 9);
+    const adminKey = Math.random().toString(36).substring(2, 12);
 
-      const data = await res.json();
+    const newListData = {
+      id: listId,
+      title: title.trim(),
+      items: [],
+      createdAt: new Date().toISOString(),
+    };
 
-      if (res.ok && data.wishlist) {
-        localStorage.setItem(`wishlist_key_${data.wishlist.id}`, data.wishlist.secretKey);
-        
-        const newList = { id: data.wishlist.id, title: data.wishlist.title };
-        const updatedLists = [newList, ...myLists];
-        setMyLists(updatedLists);
-        localStorage.setItem('my_wishlists', JSON.stringify(updatedLists));
+    // Speichere die Liste in localStorage
+    localStorage.setItem(`wishlist_data_${listId}`, JSON.stringify(newListData));
+    localStorage.setItem(`wishlist_admin_${listId}`, adminKey);
 
-        router.push(`/wishlists/${data.wishlist.id}?key=${data.wishlist.secretKey}`);
-      } else {
-        alert(data.error || 'Fehler beim Erstellen der Wunschliste');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Ein Netzwerkfehler ist aufgetreten.');
-    } finally {
-      setLoading(false);
-    }
+    // Füge sie zur lokalen Übersichtsliste hinzu
+    const updatedLists = [{ id: listId, title: title.trim() }, ...myLists];
+    setMyLists(updatedLists);
+    localStorage.setItem('local_wishlists', JSON.stringify(updatedLists));
+
+    // Weiterleitung zur Detailseite mit Admin-Modus
+    router.push(`/wishlists/${listId}?key=${adminKey}`);
   };
 
   return (
@@ -86,22 +79,22 @@ export default function Home() {
           <div className="flex gap-2">
             <button
               onClick={() => handleThemeChange('blue')}
-              className={`w-5 h-5 rounded-full bg-blue-300 transition-transform ${currentTheme === 'blue' ? 'ring-2 ring-offset-2 ring-blue-400 scale-110' : 'opacity-70'}`}
+              className={`w-5 h-5 rounded-full bg-blue-300 transition-transform cursor-pointer ${currentTheme === 'blue' ? 'ring-2 ring-offset-2 ring-blue-400 scale-110' : 'opacity-70'}`}
               title="Pastell Blau"
             />
             <button
               onClick={() => handleThemeChange('sage')}
-              className={`w-5 h-5 rounded-full bg-[#84a98c] transition-transform ${currentTheme === 'sage' ? 'ring-2 ring-offset-2 ring-[#84a98c] scale-110' : 'opacity-70'}`}
+              className={`w-5 h-5 rounded-full bg-[#84a98c] transition-transform cursor-pointer ${currentTheme === 'sage' ? 'ring-2 ring-offset-2 ring-[#84a98c] scale-110' : 'opacity-70'}`}
               title="Pastell Salbei"
             />
             <button
               onClick={() => handleThemeChange('berry')}
-              className={`w-5 h-5 rounded-full bg-[#e0b1cb] transition-transform ${currentTheme === 'berry' ? 'ring-2 ring-offset-2 ring-[#e0b1cb] scale-110' : 'opacity-70'}`}
+              className={`w-5 h-5 rounded-full bg-[#e0b1cb] transition-transform cursor-pointer ${currentTheme === 'berry' ? 'ring-2 ring-offset-2 ring-[#e0b1cb] scale-110' : 'opacity-70'}`}
               title="Pastell Beere"
             />
             <button
               onClick={() => handleThemeChange('yellow')}
-              className={`w-5 h-5 rounded-full bg-[#f4e2bb] transition-transform ${currentTheme === 'yellow' ? 'ring-2 ring-offset-2 ring-[#f4e2bb] scale-110' : 'opacity-70'}`}
+              className={`w-5 h-5 rounded-full bg-[#f4e2bb] transition-transform cursor-pointer ${currentTheme === 'yellow' ? 'ring-2 ring-offset-2 ring-[#f4e2bb] scale-110' : 'opacity-70'}`}
               title="Pastell Gelb"
             />
           </div>
@@ -114,7 +107,7 @@ export default function Home() {
           </p>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleCreateList} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Titel der Wunschliste</label>
             <input
@@ -128,11 +121,10 @@ export default function Home() {
           </div>
           <button
             type="submit"
-            disabled={loading}
             style={{ backgroundColor: 'var(--primary-color)' }}
-            className="w-full py-2.5 text-white font-medium rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="w-full py-2.5 text-white font-medium rounded-lg transition-opacity hover:opacity-90 cursor-pointer"
           >
-            {loading ? 'Wird erstellt...' : 'Wunschliste erstellen'}
+            Wunschliste erstellen
           </button>
         </form>
 
@@ -141,11 +133,11 @@ export default function Home() {
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Deine gespeicherten Wunschlisten:</h2>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {myLists.map((list) => {
-                const key = typeof window !== 'undefined' ? localStorage.getItem(`wishlist_key_${list.id}`) : '';
+                const adminKey = typeof window !== 'undefined' ? localStorage.getItem(`wishlist_admin_${list.id}`) : '';
                 return (
                   <Link
                     key={list.id}
-                    href={`/wishlists/${list.id}${key ? `?key=${key}` : ''}`}
+                    href={`/wishlists/${list.id}${adminKey ? `?key=${adminKey}` : ''}`}
                     style={{ backgroundColor: 'var(--accent-bg)' }}
                     className="block p-3 rounded-xl border border-gray-200/60 transition-colors text-sm font-medium text-gray-800 flex justify-between items-center hover:opacity-80"
                   >
